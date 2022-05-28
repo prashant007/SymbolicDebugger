@@ -1,0 +1,84 @@
+;#lang plai
+#lang rosette/safe
+
+
+(require rosette/lib/angelic    ; provides `choose*`
+         rosette/lib/destruct
+         racket/struct
+         rosette/lib/synthax)  ; provides `destruct`
+; Tell Rosette we really do want to use integers.
+(current-bitwidth #f)
+
+; Define a symbolic variable called y of type integer.
+(define-symbolic y integer?)
+(define-symbolic p q x integer?)
+
+; Syntax for our simple DSL
+(struct plus (left right) #:transparent)
+; (struct sub (left right) #:transparent)
+(struct mul (left right) #:transparent)
+(struct num (arg) #:transparent)
+(struct square (arg) #:transparent)
+
+(define (add-exprs x y a) list (plus x (num a)) (plus (num a) y) (mul x y))
+(define (mul-exprs x y a) list (mul x (num a)) (mul (num a) y) (plus x y))
+
+
+(define (??expr e)
+  ;(define-symbolic a integer?)
+  ; (define b (apply choose* terminals))
+  (destruct e 
+            [(plus x y) (choose* list (mul x y)
+                                 (plus x (??expr y))
+                                 (plus (??expr x) y))]
+            [(mul x y)  (choose* list (mul x (??expr y))
+                                 (mul (??expr x) y)
+                                 (plus x y))]
+            [_ p]))
+
+
+; Interpreter for our DSL.
+; We just recurse on the program's syntax using pattern matching.
+(define (interpret p)
+  (destruct p
+            [(plus a b)  (+ (interpret a) (interpret b))]
+            [(num a)     a]
+            [(mul a b)   (* (interpret a) (interpret b))]
+            [(square a)  (expt (interpret a) 2)]
+            [_ p]))
+
+
+
+(define-symbolic c1 c2 integer?)
+(define op (apply choose* (list mul plus)))
+
+(define exp1 (plus
+              (num 4)
+              (plus (num 2)(num 3))))
+
+(define exp2-0 (plus (num 2)
+                     (mul (num 3)(num 4))))
+
+(define exp2 (plus exp2-0
+                   (plus (num 5) (num -2))))
+
+(define sketch1 (??expr exp1))
+
+
+;(define sketch1 (??expr (mul (num 12)(num 3))))
+
+(define sol
+  (synthesize
+   #:forall (list x)
+   #:guarantee (assert (equal? (interpret sketch1) 10)))
+  )
+  
+
+;evaluate sketch1 sol
+
+(define mysol (evaluate sketch1 sol))
+
+(pretty-print mysol)
+
+
+
