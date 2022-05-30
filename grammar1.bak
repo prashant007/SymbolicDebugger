@@ -1,0 +1,20 @@
+;#lang plai
+#lang rosette
+
+
+(require rosette/lib/angelic    ; provides `choose*`
+         rosette/lib/destruct
+         racket/struct
+         rosette/lib/synthax)  ; provides `destruct`
+; Tell Rosette we really do want to use integers.
+(current-bitwidth #f)
+
+
+(define-grammar (bitfast y)
+  [expr                            ; <expr> :=
+   (choose y (?? integer))    ;  y | <8-bit constant> |
+           ((bop) (expr) (expr)))] ;  ((bop) <expr> <expr>)
+  [bop                             ; <bop>  :=
+   (choose bvshl bvashr bvlshr     ;  bvshl | bvashr | bvlshr |
+           bvand bvor bvxor        ;  bvand | bvor | bvxor | 
+           bvadd bvsub)])  
