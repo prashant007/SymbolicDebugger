@@ -42,7 +42,7 @@
 
 
 (define (new-fun x y)
-  (expr?? x y #:depth 2))
+  (expr?? x y #:depth 1))
 
 
 (define sol
@@ -50,8 +50,10 @@
    #:forall (list x y)
    #:guarantee  (begin (assume (and (> x 0) (> y 0)))
                        (assert (equal? (interpret(some-fun x y)) (interpret(new-fun x y)))))
+                       ;(assert (equal? (interpret(some-fun 5 10)) 30)))
+                       )
    )
-  )
+  
 
 ;(interpret (some-fun x y))
 ;(interpret (new-fun x y))
